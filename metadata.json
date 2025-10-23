@@ -1,0 +1,5 @@
+{
+  "name": "Análisis de Video con Rúbrica",
+  "description": "Una aplicación experimental que utiliza la API de Gemini para analizar un video de acuerdo con una rúbrica de realización audiovisual.",
+  "requestFramePermissions": []
+}
