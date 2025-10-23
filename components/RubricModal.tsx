@@ -18,7 +18,7 @@ export const RubricModal: React.FC<RubricModalProps> = ({ onClose }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center p-4 border-b border-slate-700">
-            <h2 className="text-xl font-bold text-blue-400">Rúbrica de Evaluación Audiovisual</h2>
+            <h2 className="text-xl font-bold text-green-400">Rúbrica de Evaluación Audiovisual</h2>
             <button 
                 onClick={onClose} 
                 className="text-gray-400 hover:text-white transition-colors"

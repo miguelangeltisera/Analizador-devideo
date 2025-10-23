@@ -54,7 +54,7 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
                 />
                 <defs>
                     <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#38bdf8" />
+                        <stop offset="0%" stopColor="#4ade80" />
                         <stop offset="100%" stopColor={color} />
                     </linearGradient>
                 </defs>
@@ -193,8 +193,8 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
 
     return (
         <div className="space-y-10">
-            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl shadow-blue-500/10">
-                <div className="flex items-center gap-3 text-2xl font-bold text-blue-400 mb-4">
+            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl shadow-green-500/10">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <ChartBarIcon className="w-8 h-8"/>
                     <h2>Resultado General</h2>
                 </div>
@@ -202,7 +202,7 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                     <ScoreCircle score={result.finalScore} />
                     <div className="flex-1 text-center sm:text-left">
                         <p className="text-xl font-bold text-gray-200">Calificación Final:</p>
-                        <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-teal-300">
+                        <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-300">
                            {result.finalGrade}
                         </p>
                         <div className="mt-4 p-4 bg-gray-900/50 rounded-lg">
@@ -214,16 +214,16 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
             </section>
 
             <section>
-                <div className="flex items-center gap-3 text-2xl font-bold text-blue-400 mb-4">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <DownloadIcon className="w-8 h-8"/>
                     <h2>Descargar Reporte</h2>
                 </div>
                  <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-5 flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onClick={handleDownloadTxt} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-blue-600 rounded-lg shadow-lg hover:bg-blue-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-blue-500 transform hover:scale-105">
+                    <button onClick={handleDownloadTxt} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 transform hover:scale-105">
                         <DocumentTextIcon className="w-5 h-5"/>
                         Descargar TXT
                     </button>
-                    <button onClick={handleDownloadPdf} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-lg hover:bg-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-900 focus:ring-teal-500 transform hover:scale-105">
+                    <button onClick={handleDownloadPdf} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-lg hover:bg-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-500 transform hover:scale-105">
                         <DocumentTextIcon className="w-5 h-5"/>
                         Descargar PDF
                     </button>
@@ -231,7 +231,7 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
             </section>
             
             <section>
-                <div className="flex items-center gap-3 text-2xl font-bold text-blue-400 mb-4">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <DocumentTextIcon className="w-8 h-8"/>
                     <h2>Análisis Detallado por Criterio</h2>
                 </div>

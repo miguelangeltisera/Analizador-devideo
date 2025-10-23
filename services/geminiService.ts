@@ -2,10 +2,9 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 import { GEMINI_MODEL, RUBRIC_TEXT } from '../constants';
 
-const getGeminiClient = () => {
-  const apiKey = process.env.API_KEY;
+const getGeminiClient = (apiKey: string) => {
   if (!apiKey) {
-    throw new Error("La clave API de Google no está configurada. Debes configurar la variable de entorno API_KEY en la configuración de tu sitio (por ejemplo, en Netlify) para que la aplicación funcione.");
+    throw new Error("La clave API de Google no ha sido proporcionada. Por favor, ingrésala en la aplicación.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -28,7 +27,7 @@ const fileToGenerativePart = async (file: File) => {
   };
 };
 
-export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => {
+export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<AnalysisResult> => {
   const videoPart = await fileToGenerativePart(videoFile);
 
   const prompt = `
@@ -70,7 +69,7 @@ export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => 
   };
   
   try {
-    const ai = getGeminiClient();
+    const ai = getGeminiClient(apiKey);
     const result = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [{ parts: [videoPart, { text: prompt }] }],
