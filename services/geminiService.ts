@@ -2,14 +2,6 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 import { GEMINI_MODEL, RUBRIC_TEXT } from '../constants';
 
-const getGeminiClient = (apiKey: string) => {
-  if (!apiKey) {
-    throw new Error("La clave API de Google no ha sido proporcionada. Por favor, ingrésala en la aplicación.");
-  }
-  return new GoogleGenAI({ apiKey });
-};
-
-
 // Helper function to convert File to a GoogleGenerativeAI.Part object
 const fileToGenerativePart = async (file: File) => {
   const base64EncodedData = await new Promise<string>((resolve, reject) => {
@@ -27,7 +19,8 @@ const fileToGenerativePart = async (file: File) => {
   };
 };
 
-export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<AnalysisResult> => {
+// FIX: Remove apiKey parameter and use process.env.API_KEY directly.
+export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => {
   const videoPart = await fileToGenerativePart(videoFile);
 
   const prompt = `
@@ -69,7 +62,8 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
   };
   
   try {
-    const ai = getGeminiClient(apiKey);
+    // FIX: Initialize GoogleGenAI with API key from environment variables.
+    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     const result = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [{ parts: [videoPart, { text: prompt }] }],
@@ -85,10 +79,11 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
     return parsedResult;
   } catch (error) {
     console.error("Error analyzing video with Gemini:", error);
-     if (error instanceof Error && error.message.includes("API_KEY_INVALID")) {
-      throw new Error("La clave de API no es válida. Por favor, verifica que la has copiado correctamente desde Google AI Studio.");
-    }
     if (error instanceof Error) {
+        // Check for specific overload error (503)
+        if (error.message.includes('503') && (error.message.includes('overloaded') || error.message.includes('UNAVAILABLE'))) {
+            throw new Error("El modelo de IA está sobrecargado en este momento. Por favor, espera unos segundos y vuelve a intentarlo.");
+        }
         throw new Error(`Fallo al analizar el video: ${error.message}`);
     }
     throw new Error("Ocurrió un error desconocido durante el análisis del video.");

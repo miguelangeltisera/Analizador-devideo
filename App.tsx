@@ -1,15 +1,12 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Header } from './components/Header';
 import { VideoInput } from './components/VideoInput';
 import { AnalysisResultDisplay } from './components/AnalysisResultDisplay';
 import { Loader } from './components/Loader';
-import { FilmReelIcon, SparklesIcon } from './components/Icons';
+import { FilmReelIcon, SparklesIcon, RetryIcon } from './components/Icons';
 import { RubricModal } from './components/RubricModal';
-import { ApiKeyModal } from './components/ApiKeyModal';
 import { analyzeVideo } from './services/geminiService';
 import type { AnalysisResult } from './types';
-
-const API_KEY_STORAGE_KEY = 'gemini-api-key';
 
 const App: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
@@ -20,41 +17,8 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRubricOpen, setIsRubricOpen] = useState<boolean>(false);
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
-  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
-    if (savedKey) {
-      setApiKey(savedKey);
-    } else {
-      setIsKeyModalOpen(true);
-    }
-  }, []);
-
-  const handleSaveKey = (key: string) => {
-    if (key) {
-      localStorage.setItem(API_KEY_STORAGE_KEY, key);
-      setApiKey(key);
-      setIsKeyModalOpen(false);
-      setApiKeyError(null); 
-    }
-  };
-
-  const handleClearKey = () => {
-    localStorage.removeItem(API_KEY_STORAGE_KEY);
-    setApiKey(null);
-    setApiKeyError(null);
-    setIsKeyModalOpen(true);
-  };
 
   const handleAnalysis = useCallback(async () => {
-    if (!apiKey) {
-      setError("La clave de API de Gemini no está configurada.");
-      setIsKeyModalOpen(true);
-      return;
-    }
     if (!videoFile) {
       setError("Por favor, selecciona un archivo de video primero.");
       return;
@@ -65,34 +29,25 @@ const App: React.FC = () => {
     }
     setIsLoading(true);
     setError(null);
-    setApiKeyError(null);
     setAnalysisResult(null);
 
     try {
-      const result = await analyzeVideo(videoFile, apiKey);
+      const result = await analyzeVideo(videoFile);
       setAnalysisResult(result);
     } catch (err: any) {
-      if (err.message.includes("La clave de API no es válida")) {
-        setApiKeyError(err.message);
-        setIsKeyModalOpen(true);
-      } else {
-        setError(err.message || "Ocurrió un error inesperado al analizar el video.");
-      }
+      setError(err.message || "Ocurrió un error inesperado al analizar el video.");
     } finally {
       setIsLoading(false);
     }
-  }, [videoFile, studentName, videoTitle, studentEmail, apiKey]);
+  }, [videoFile, studentName, videoTitle, studentEmail]);
 
-  if (!apiKey && isKeyModalOpen) {
-    return <ApiKeyModal onSave={handleSaveKey} error={apiKeyError} />;
-  }
+  const isRetryableError = error?.includes('sobrecargado');
 
   return (
     <div className="min-h-screen text-gray-200 font-sans p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         <Header 
             onShowRubric={() => setIsRubricOpen(true)}
-            onShowApiKeyModal={() => setIsKeyModalOpen(true)}
         />
         
         <main className="mt-8">
@@ -129,9 +84,20 @@ const App: React.FC = () => {
           {isLoading && <Loader />}
 
           {error && (
-            <div className="mt-8 bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg" role="alert">
-              <strong className="font-bold">Error: </strong>
-              <span className="block sm:inline">{error}</span>
+            <div className="mt-8 bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4" role="alert">
+              <div>
+                <strong className="font-bold">Error: </strong>
+                <span className="block sm:inline">{error}</span>
+              </div>
+              {isRetryableError && (
+                <button
+                  onClick={handleAnalysis}
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-semibold text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors flex-shrink-0"
+                >
+                  <RetryIcon className="w-5 h-5" />
+                  Reintentar
+                </button>
+              )}
             </div>
           )}
 
@@ -148,7 +114,6 @@ const App: React.FC = () => {
         </main>
       </div>
       {isRubricOpen && <RubricModal onClose={() => setIsRubricOpen(false)} />}
-      {isKeyModalOpen && apiKey && <ApiKeyModal onSave={handleSaveKey} initialKey={apiKey} onClearKey={handleClearKey} error={apiKeyError} />}
     </div>
   );
 };

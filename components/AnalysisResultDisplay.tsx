@@ -66,8 +66,15 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
     )
 }
 
+interface AnalysisResultDisplayProps {
+  result: AnalysisResult;
+  studentName: string;
+  videoTitle: string;
+  studentEmail: string;
+}
+
 export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ result, studentName, videoTitle, studentEmail }) => {
-    const categories = [...new Set(result.evaluations.map(e => e.category))];
+    const categories: string[] = [...new Set<string>(result.evaluations.map(e => e.category))];
     const [openCategory, setOpenCategory] = useState<string | null>(categories[0] || null);
 
     const handleToggleCategory = (category: string) => {
@@ -115,83 +122,224 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
       URL.revokeObjectURL(url);
     };
 
-    const handleDownloadPdf = () => {
+    const handleDownloadPdf = async () => {
         const doc = new jsPDF();
-        const margin = 15;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const textWidth = pageWidth - margin * 2;
-        let y = 20;
-
-        const checkPageBreak = (neededHeight: number) => {
-            if (y + neededHeight > 280) {
-                doc.addPage();
-                y = 20;
+        const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+        const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+        const MARGIN = 15;
+        const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2;
+        const HEADER_FOOTER_HEIGHT = 20;
+    
+        // --- Colors and Fonts ---
+        const COLOR_PRIMARY = '#059669'; // Green-600
+        const COLOR_TEXT_DARK = '#1f2937'; // Gray-800
+        const COLOR_TEXT_LIGHT = '#6b7280'; // Gray-500
+        const COLOR_CARD_BG = '#f3f4f6'; // Gray-100
+    
+        // --- Helper Functions ---
+        const getScoreHexColor = (score: number) => {
+            if (score >= 90) return '#4ade80';
+            if (score >= 70) return '#facc15';
+            if (score >= 50) return '#fb923c';
+            return '#f87171';
+        };
+        
+        const getLevelHexColor = (level: CriterionEvaluation['level']) => {
+            switch(level) {
+                case 'Excelente': return '#10b981'; // green-500
+                case 'Bueno': return '#f59e0b'; // yellow-500
+                case 'Satisfactorio': return '#3b82f6'; // blue-500
+                case 'Mejorable': return '#f97316'; // orange-500
+                case 'Insuficiente': return '#ef4444'; // red-500
+                default: return COLOR_TEXT_LIGHT;
             }
         };
 
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.text('Análisis de Video - Resultados', pageWidth / 2, y, { align: 'center' });
-        y += 15;
+        const getScoreCircleSVG = (score: number, color: string) => {
+            const circumference = 2 * Math.PI * 45;
+            const offset = circumference - (score / 100) * circumference;
+            // Using a simple color instead of a gradient for better PDF compatibility
+            return `
+              <svg width="120" height="120" xmlns="http://www.w3.org/2000/svg">
+                <circle stroke-width="10" stroke="#e5e7eb" fill="transparent" r="45" cx="60" cy="60"/>
+                <circle
+                  stroke-width="10"
+                  stroke-dasharray="${circumference}"
+                  stroke-dashoffset="${offset}"
+                  stroke-linecap="round"
+                  stroke="${color}"
+                  fill="transparent"
+                  r="45"
+                  cx="60"
+                  cy="60"
+                  transform="rotate(-90 60 60)"
+                />
+                <text x="60" y="68" font-family="helvetica, sans-serif" font-size="28" font-weight="bold" text-anchor="middle" fill="${color}">${score}</text>
+                <text x="60" y="80" font-family="helvetica, sans-serif" font-size="8" text-anchor="middle" fill="${COLOR_TEXT_LIGHT}">/ 100</text>
+              </svg>
+            `;
+          };
 
-        doc.setFontSize(12);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Alumno: ${studentName}`, margin, y);
-        y += 7;
-        doc.text(`Email: ${studentEmail}`, margin, y);
-        y += 7;
-        doc.text(`Video: ${videoTitle}`, margin, y);
-        y += 15;
-
-        doc.setLineWidth(0.5);
-        doc.line(margin, y - 5, pageWidth - margin, y - 5);
-
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Resultado General', margin, y);
-        y += 8;
-
-        doc.setFontSize(11);
-        doc.setFont('helvetica', 'normal');
-        doc.text(`Puntaje Final: ${result.finalScore} / 100`, margin, y);
-        y += 7;
-        doc.text(`Calificación Final: ${result.finalGrade}`, margin, y);
-        y += 7;
-        doc.setFont('helvetica', 'bold');
-        doc.text('Feedback General:', margin, y);
-        y += 5;
-        doc.setFont('helvetica', 'normal');
-        const splitOverallFeedback = doc.splitTextToSize(result.overallFeedback, textWidth);
-        doc.text(splitOverallFeedback, margin, y);
-        y += (splitOverallFeedback.length * 5) + 10;
-        
-        doc.line(margin, y - 5, pageWidth - margin, y - 5);
-        
-        doc.setFontSize(14);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Análisis Detallado por Criterio', margin, y);
-        y += 10;
-        
-        result.evaluations.forEach(e => {
-            doc.setFontSize(12);
+        const addHeader = (doc: jsPDF) => {
+            doc.setFillColor(COLOR_PRIMARY);
+            doc.rect(0, 0, PAGE_WIDTH, HEADER_FOOTER_HEIGHT, 'F');
             doc.setFont('helvetica', 'bold');
-            const categoryText = `${e.category} - ${e.criterion}`;
-            const splitCategory = doc.splitTextToSize(categoryText, textWidth);
-            checkPageBreak(10 + (splitCategory.length * 5));
-            doc.text(splitCategory, margin, y);
-            y += (splitCategory.length * 5);
-            
-            doc.setFontSize(10);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`Nivel: ${e.level}  |  Puntaje: ${e.score}/${e.maxScore}`, margin, y);
-            y += 7;
+            doc.setFontSize(12);
+            doc.setTextColor('#FFFFFF');
+            doc.text('Reporte de Análisis de Video', MARGIN, 13);
+        };
 
-            const splitFeedback = doc.splitTextToSize(e.feedback, textWidth);
-            checkPageBreak(5 + (splitFeedback.length * 4));
-            doc.text(splitFeedback, margin, y);
-            y += (splitFeedback.length * 4) + 8;
+        const addFooter = (doc: jsPDF) => {
+            // FIX: The type definition for `jsPDF` is incorrect, causing a compile error on `getNumberOfPages`.
+            // Using `doc.internal.pages.length` is a reliable alternative to get the page count.
+            const pageCount = doc.internal.pages.length;
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(8);
+                doc.setTextColor(COLOR_TEXT_LIGHT);
+                doc.text(`Página ${i} de ${pageCount}`, PAGE_WIDTH / 2, PAGE_HEIGHT - 10, { align: 'center' });
+                doc.text(`Generado por Analizador de Video con Rúbrica`, MARGIN, PAGE_HEIGHT - 10);
+            }
+        };
+
+        let y = HEADER_FOOTER_HEIGHT + 15;
+
+        const checkPageBreak = (neededHeight: number) => {
+            if (y + neededHeight > PAGE_HEIGHT - HEADER_FOOTER_HEIGHT) {
+                doc.addPage();
+                addHeader(doc);
+                y = HEADER_FOOTER_HEIGHT + 10;
+            }
+        };
+
+        // --- PDF Generation Starts ---
+        addHeader(doc);
+
+        // Student Info
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(COLOR_TEXT_DARK);
+        doc.text('Alumno:', MARGIN, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(studentName, MARGIN + 20, y);
+
+        doc.setFont('helvetica', 'bold');
+        doc.text('Video:', PAGE_WIDTH / 2, y);
+        doc.setFont('helvetica', 'normal');
+        doc.text(videoTitle, PAGE_WIDTH / 2 + 15, y);
+        y += 7;
+
+        // General Results
+        y += 10;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(COLOR_PRIMARY);
+        doc.text('Resultado General', MARGIN, y);
+        y += 5;
+        doc.setDrawColor(COLOR_PRIMARY);
+        doc.line(MARGIN, y, MARGIN + 40, y);
+        y += 10;
+
+        // Add Score Circle Image
+        const scoreColor = getScoreHexColor(result.finalScore);
+        const svgString = getScoreCircleSVG(result.finalScore, scoreColor);
+        const svgDataUrl = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(svgString)));
+        
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+            const img = new Image();
+            await new Promise<void>(resolve => {
+                img.onload = () => {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    doc.addImage(canvas, 'PNG', MARGIN, y, 40, 40);
+                    resolve();
+                };
+                img.src = svgDataUrl;
+            });
+        }
+        
+        // General results text beside circle
+        const textX = MARGIN + 40 + 10;
+        const textWidth = CONTENT_WIDTH - 40 - 10;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(12);
+        doc.setTextColor(COLOR_TEXT_DARK);
+        doc.text('Calificación Final:', textX, y + 8);
+        
+        doc.setFontSize(22);
+        doc.setTextColor(scoreColor);
+        doc.text(result.finalGrade, textX, y + 18);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(COLOR_TEXT_DARK);
+        doc.text('Feedback General:', textX, y + 28);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(COLOR_TEXT_LIGHT);
+        const splitFeedback = doc.splitTextToSize(result.overallFeedback, textWidth);
+        doc.text(splitFeedback, textX, y + 34);
+
+        y += 50; // space after general results
+
+        // Detailed Analysis
+        y += 10;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(COLOR_PRIMARY);
+        doc.text('Análisis Detallado por Criterio', MARGIN, y);
+        y += 5;
+        doc.setDrawColor(COLOR_PRIMARY);
+        doc.line(MARGIN, y, MARGIN + 68, y);
+        y += 10;
+
+        result.evaluations.forEach(e => {
+            doc.setFont('helvetica', 'bold');
+            const criterionText = `${e.category} - ${e.criterion}`;
+            const feedbackLines = doc.splitTextToSize(e.feedback, CONTENT_WIDTH - 10);
+            const neededHeight = 20 + (feedbackLines.length * 5); // Approximate height
+            
+            checkPageBreak(neededHeight + 10);
+
+            doc.setFillColor(COLOR_CARD_BG);
+            doc.setDrawColor(COLOR_CARD_BG);
+            doc.roundedRect(MARGIN, y, CONTENT_WIDTH, neededHeight, 3, 3, 'F');
+            
+            let cardY = y + 8;
+            
+            doc.setFontSize(11);
+            doc.setTextColor(COLOR_TEXT_DARK);
+            const splitCriterion = doc.splitTextToSize(criterionText, CONTENT_WIDTH - 50);
+            doc.text(splitCriterion, MARGIN + 5, cardY);
+            
+            const scoreText = `${e.score}/${e.maxScore}`;
+            doc.setFontSize(14);
+            doc.setTextColor(getScoreHexColor((e.score / e.maxScore) * 100));
+            doc.text(scoreText, PAGE_WIDTH - MARGIN - 5, cardY, { align: 'right' });
+            
+            cardY += 8;
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(9);
+            doc.setTextColor(getLevelHexColor(e.level));
+            doc.text(e.level.toUpperCase(), MARGIN + 5, cardY);
+            
+            cardY += 6;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.setTextColor(COLOR_TEXT_LIGHT);
+            doc.text(feedbackLines, MARGIN + 5, cardY);
+
+            y += neededHeight + 5; // move to next card position
         });
 
+        addFooter(doc);
         doc.save(`analisis_video_${studentName.replace(/\s+/g, '_')}.pdf`);
     };
 
