@@ -1,9 +1,15 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnalysisResult } from '../types';
 import { GEMINI_MODEL, RUBRIC_TEXT } from '../constants';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const getGeminiClient = () => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("La clave API de Google no está configurada. Debes configurar la variable de entorno API_KEY en la configuración de tu sitio (por ejemplo, en Netlify) para que la aplicación funcione.");
+  }
+  return new GoogleGenAI({ apiKey });
+};
+
 
 // Helper function to convert File to a GoogleGenerativeAI.Part object
 const fileToGenerativePart = async (file: File) => {
@@ -64,6 +70,7 @@ export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => 
   };
   
   try {
+    const ai = getGeminiClient();
     const result = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [{ parts: [videoPart, { text: prompt }] }],
@@ -80,8 +87,8 @@ export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => 
   } catch (error) {
     console.error("Error analyzing video with Gemini:", error);
     if (error instanceof Error) {
-        throw new Error(`Failed to analyze video. Gemini API error: ${error.message}`);
+        throw new Error(`Fallo al analizar el video: ${error.message}`);
     }
-    throw new Error("An unknown error occurred during video analysis.");
+    throw new Error("Ocurrió un error desconocido durante el análisis del video.");
   }
 };

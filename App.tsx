@@ -42,7 +42,7 @@ const App: React.FC = () => {
   }, [videoFile, studentName, videoTitle, studentEmail]);
 
   return (
-    <div className="min-h-screen bg-slate-900 text-gray-200 font-sans p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen text-gray-200 font-sans p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         <Header onShowRubric={() => setIsRubricOpen(true)} />
         
