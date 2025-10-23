@@ -1,10 +1,11 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Header } from './components/Header';
 import { VideoInput } from './components/VideoInput';
 import { AnalysisResultDisplay } from './components/AnalysisResultDisplay';
 import { Loader } from './components/Loader';
 import { FilmReelIcon, SparklesIcon, RetryIcon } from './components/Icons';
 import { RubricModal } from './components/RubricModal';
+import { ApiKeyModal } from './components/ApiKeyModal';
 import { analyzeVideo } from './services/geminiService';
 import type { AnalysisResult } from './types';
 
@@ -17,8 +18,38 @@ const App: React.FC = () => {
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRubricOpen, setIsRubricOpen] = useState<boolean>(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
+  const [isApiModalOpen, setIsApiModalOpen] = useState<boolean>(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storedKey = localStorage.getItem('gemini-api-key');
+    if (storedKey) {
+      setApiKey(storedKey);
+    } else {
+      setIsApiModalOpen(true);
+    }
+  }, []);
+
+  const handleSaveApiKey = (key: string) => {
+    setApiKey(key);
+    localStorage.setItem('gemini-api-key', key);
+    setIsApiModalOpen(false);
+    setApiKeyError(null);
+  };
+
+  const handleClearApiKey = () => {
+    setApiKey(null);
+    localStorage.removeItem('gemini-api-key');
+    setIsApiModalOpen(true);
+  };
 
   const handleAnalysis = useCallback(async () => {
+    if (!apiKey) {
+      setError("Por favor, configura tu clave de API de Gemini primero.");
+      setIsApiModalOpen(true);
+      return;
+    }
     if (!videoFile) {
       setError("Por favor, selecciona un archivo de video primero.");
       return;
@@ -32,14 +63,19 @@ const App: React.FC = () => {
     setAnalysisResult(null);
 
     try {
-      const result = await analyzeVideo(videoFile);
+      const result = await analyzeVideo(videoFile, apiKey);
       setAnalysisResult(result);
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error inesperado al analizar el video.");
+      if (err.message.includes('La clave de API no es válida')) {
+        setApiKeyError(err.message);
+        handleClearApiKey();
+      } else {
+        setError(err.message || "Ocurrió un error inesperado al analizar el video.");
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [videoFile, studentName, videoTitle, studentEmail]);
+  }, [videoFile, studentName, videoTitle, studentEmail, apiKey]);
 
   const isRetryableError = error?.includes('sobrecargado');
 
@@ -48,6 +84,7 @@ const App: React.FC = () => {
       <div className="max-w-4xl mx-auto">
         <Header 
             onShowRubric={() => setIsRubricOpen(true)}
+            onClearApiKey={handleClearApiKey}
         />
         
         <main className="mt-8">
@@ -72,7 +109,7 @@ const App: React.FC = () => {
             <div className="mt-6 text-center">
               <button
                 onClick={handleAnalysis}
-                disabled={!videoFile || !studentName || !videoTitle || !studentEmail || isLoading}
+                disabled={!videoFile || !studentName || !videoTitle || !studentEmail || isLoading || !apiKey}
                 className="inline-flex items-center justify-center gap-2 px-8 py-3 font-semibold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 transform hover:scale-105"
               >
                 <SparklesIcon className="w-5 h-5"/>
@@ -114,6 +151,14 @@ const App: React.FC = () => {
         </main>
       </div>
       {isRubricOpen && <RubricModal onClose={() => setIsRubricOpen(false)} />}
+      {isApiModalOpen && (
+        <ApiKeyModal 
+            onSave={handleSaveApiKey}
+            initialKey={apiKey || ''}
+            error={apiKeyError}
+            onClearKey={handleClearApiKey}
+        />
+      )}
     </div>
   );
 };

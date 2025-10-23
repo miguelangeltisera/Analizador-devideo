@@ -19,8 +19,11 @@ const fileToGenerativePart = async (file: File) => {
   };
 };
 
-// FIX: Remove apiKey parameter and use process.env.API_KEY directly.
-export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => {
+export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<AnalysisResult> => {
+  if (!apiKey) {
+    throw new Error("La clave API de Google no está configurada. Por favor, configúrala para continuar.");
+  }
+
   const videoPart = await fileToGenerativePart(videoFile);
 
   const prompt = `
@@ -62,8 +65,7 @@ export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => 
   };
   
   try {
-    // FIX: Initialize GoogleGenAI with API key from environment variables.
-    const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    const ai = new GoogleGenAI({ apiKey });
     const result = await ai.models.generateContent({
       model: GEMINI_MODEL,
       contents: [{ parts: [videoPart, { text: prompt }] }],
@@ -80,9 +82,11 @@ export const analyzeVideo = async (videoFile: File): Promise<AnalysisResult> => 
   } catch (error) {
     console.error("Error analyzing video with Gemini:", error);
     if (error instanceof Error) {
-        // Check for specific overload error (503)
         if (error.message.includes('503') && (error.message.includes('overloaded') || error.message.includes('UNAVAILABLE'))) {
             throw new Error("El modelo de IA está sobrecargado en este momento. Por favor, espera unos segundos y vuelve a intentarlo.");
+        }
+        if (error.message.includes('API key not valid')) {
+            throw new Error('La clave de API no es válida. Por favor, verifica e inténtalo de nuevo.');
         }
         throw new Error(`Fallo al analizar el video: ${error.message}`);
     }

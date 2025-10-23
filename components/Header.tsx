@@ -3,9 +3,10 @@ import { LogoIcon } from './Icons';
 
 interface HeaderProps {
     onShowRubric: () => void;
+    onClearApiKey: () => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ onShowRubric }) => {
+export const Header: React.FC<HeaderProps> = ({ onShowRubric, onClearApiKey }) => {
   return (
     <header className="text-center">
       <div className="flex justify-center items-center gap-4">
@@ -23,6 +24,12 @@ export const Header: React.FC<HeaderProps> = ({ onShowRubric }) => {
           className="px-4 py-2 text-sm font-semibold text-green-300 bg-green-900/50 border border-green-800 rounded-lg hover:bg-green-800/70 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500"
         >
           Ver Rúbrica
+        </button>
+        <button 
+          onClick={onClearApiKey}
+          className="px-4 py-2 text-sm font-semibold text-yellow-300 bg-yellow-900/50 border border-yellow-800 rounded-lg hover:bg-yellow-800/70 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-yellow-500"
+        >
+          Cambiar API Key
         </button>
       </div>
     </header>
