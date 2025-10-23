@@ -1,14 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import type { AnalysisResult, CriterionEvaluation } from '../types';
 import { ChartBarIcon, CheckCircleIcon, DocumentTextIcon, SparklesIcon, DownloadIcon } from './Icons';
-
-interface AnalysisResultDisplayProps {
-  result: AnalysisResult;
-  studentName: string;
-  videoTitle: string;
-  studentEmail: string;
-}
 
 const getScoreColor = (score: number, maxScore: number) => {
   const percentage = (score / maxScore) * 100;
@@ -30,10 +23,16 @@ const getLevelBadgeClass = (level: CriterionEvaluation['level']) => {
 }
 
 const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
+    const [offset, setOffset] = useState(2 * Math.PI * 45);
     const percentage = score;
     const color = percentage >= 90 ? '#4ade80' : percentage >= 70 ? '#facc15' : percentage >= 50 ? '#fb923c' : '#f87171';
     const circumference = 2 * Math.PI * 45;
-    const strokeDashoffset = circumference - (percentage / 100) * circumference;
+
+    useEffect(() => {
+        const finalOffset = circumference - (percentage / 100) * circumference;
+        const timer = setTimeout(() => setOffset(finalOffset), 100);
+        return () => clearTimeout(timer);
+    }, [score, circumference, percentage]);
 
     return (
         <div className="relative w-32 h-32 sm:w-40 sm:h-40">
@@ -43,7 +42,7 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
                     className="transition-all duration-1000 ease-out"
                     strokeWidth="10"
                     strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
+                    strokeDashoffset={offset}
                     strokeLinecap="round"
                     stroke="url(#scoreGradient)"
                     fill="transparent"
@@ -69,6 +68,11 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
 
 export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ result, studentName, videoTitle, studentEmail }) => {
     const categories = [...new Set(result.evaluations.map(e => e.category))];
+    const [openCategory, setOpenCategory] = useState<string | null>(categories[0] || null);
+
+    const handleToggleCategory = (category: string) => {
+        setOpenCategory(prev => (prev === category ? null : category));
+    };
 
     const generateReportText = () => {
       let text = `ANÁLISIS DE VIDEO - RESULTADOS\n`;
@@ -193,7 +197,7 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
 
     return (
         <div className="space-y-10">
-            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl shadow-green-500/10">
+            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl shadow-green-500/10 animate-fade-in-up">
                 <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <ChartBarIcon className="w-8 h-8"/>
                     <h2>Resultado General</h2>
@@ -213,7 +217,7 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                 </div>
             </section>
 
-            <section>
+            <section className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
                 <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <DownloadIcon className="w-8 h-8"/>
                     <h2>Descargar Reporte</h2>
@@ -230,39 +234,50 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                  </div>
             </section>
             
-            <section>
+            <section className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
                 <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
                     <DocumentTextIcon className="w-8 h-8"/>
                     <h2>Análisis Detallado por Criterio</h2>
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-4">
                     {categories.map(category => (
-                        <div key={category} className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-5">
-                            <h3 className="text-lg font-bold text-teal-300 border-b border-gray-700 pb-2 mb-4">{category}</h3>
-                            <div className="space-y-4">
-                            {result.evaluations.filter(e => e.category === category).map((evaluation, index) => (
-                                <div key={index} className="bg-gray-900/50 p-4 rounded-lg">
-                                    <div className="flex flex-wrap justify-between items-start gap-2">
-                                        <h4 className="font-semibold text-gray-200">{evaluation.criterion}</h4>
-                                        <div className="flex items-center gap-3">
-                                            <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getLevelBadgeClass(evaluation.level)}`}>{evaluation.level}</span>
-                                            <span className={`font-bold text-lg ${getScoreColor(evaluation.score, evaluation.maxScore)}`}>
-                                                {evaluation.score}/{evaluation.maxScore}
-                                            </span>
+                        <div key={category} className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                            <button 
+                                onClick={() => handleToggleCategory(category)}
+                                className="w-full flex justify-between items-center text-left p-4 hover:bg-gray-700/50 transition-colors"
+                                aria-expanded={openCategory === category}
+                            >
+                                <h3 className="text-lg font-bold text-teal-300">{category}</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-gray-400 transition-transform duration-300 ${openCategory === category ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                            <div className={`transition-all duration-500 ease-in-out ${openCategory === category ? 'max-h-screen' : 'max-h-0'}`}>
+                                <div className="p-4 border-t border-gray-700 space-y-4">
+                                    {result.evaluations.filter(e => e.category === category).map((evaluation, index) => (
+                                        <div key={index} className="bg-gray-900/50 p-4 rounded-lg">
+                                            <div className="flex flex-wrap justify-between items-start gap-2">
+                                                <h4 className="font-semibold text-gray-200">{evaluation.criterion}</h4>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getLevelBadgeClass(evaluation.level)}`}>{evaluation.level}</span>
+                                                    <span className={`font-bold text-lg ${getScoreColor(evaluation.score, evaluation.maxScore)}`}>
+                                                        {evaluation.score}/{evaluation.maxScore}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <p className="mt-2 text-sm text-gray-400 flex items-start gap-2">
+                                                <CheckCircleIcon className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0"/>
+                                                <span>{evaluation.feedback}</span>
+                                            </p>
                                         </div>
-                                    </div>
-                                    <p className="mt-2 text-sm text-gray-400 flex items-start gap-2">
-                                        <CheckCircleIcon className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0"/>
-                                        <span>{evaluation.feedback}</span>
-                                    </p>
+                                    ))}
                                 </div>
-                            ))}
                             </div>
                         </div>
                     ))}
                 </div>
             </section>
-            <div className="mt-8 text-center p-4 bg-gray-900/50 border border-dashed border-gray-700 rounded-lg">
+            <div className="mt-8 text-center p-4 bg-gray-900/50 border border-dashed border-gray-700 rounded-lg opacity-0 animate-fade-in" style={{ animationDelay: '600ms' }}>
                 <p className="text-gray-300 font-semibold">¡Importante!</p>
                 <p className="text-gray-400 text-sm">
                 Envíe una captura de pantalla con su clasificación a <a href="mailto:mtisera@unihumboldt.edu.ve" className="text-blue-400 hover:underline">mtisera@unihumboldt.edu.ve</a>
