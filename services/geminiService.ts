@@ -85,6 +85,9 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
     return parsedResult;
   } catch (error) {
     console.error("Error analyzing video with Gemini:", error);
+     if (error instanceof Error && error.message.includes("API_KEY_INVALID")) {
+      throw new Error("La clave de API no es válida. Por favor, verifica que la has copiado correctamente desde Google AI Studio.");
+    }
     if (error instanceof Error) {
         throw new Error(`Fallo al analizar el video: ${error.message}`);
     }

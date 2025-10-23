@@ -5,10 +5,22 @@ interface ApiKeyModalProps {
   onSave: (key: string) => void;
   initialKey?: string;
   onClearKey?: () => void;
+  error?: string | null;
 }
 
-export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, initialKey, onClearKey }) => {
+export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, initialKey, onClearKey, error }) => {
   const [apiKey, setApiKey] = useState(initialKey || '');
+  const [validationMessage, setValidationMessage] = useState<string | null>(null);
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const key = e.target.value;
+    setApiKey(key);
+    if (key && !key.startsWith('AIza')) {
+      setValidationMessage("Formato incorrecto. La clave debería empezar con 'AIza...'.");
+    } else {
+      setValidationMessage(null);
+    }
+  };
 
   const handleSave = () => {
     if (apiKey.trim()) {
@@ -24,10 +36,16 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, initialKey, on
             <h2 className="mt-4 text-2xl font-bold text-white">
                 Configura tu Clave de API de Gemini
             </h2>
-            <p className="mt-2 text-sm text-gray-400">
-                Para usar esta aplicación, necesitas una clave de API de Google Gemini. 
-                Tu clave se guardará de forma segura en tu navegador.
-            </p>
+            {error ? (
+                 <p className="mt-2 text-sm text-red-400 bg-red-900/30 p-2 rounded-md border border-red-800">
+                    {error}
+                 </p>
+            ) : (
+                <p className="mt-2 text-sm text-gray-400">
+                    Para usar esta aplicación, necesitas una clave de API de Google Gemini. 
+                    Tu clave se guardará de forma segura en tu navegador.
+                </p>
+            )}
         </div>
         
         <div className="mt-6">
@@ -38,16 +56,21 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, initialKey, on
             id="api-key"
             type="password"
             value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
+            onChange={handleApiKeyChange}
             placeholder="Pega tu clave aquí (empieza con AIza...)"
-            className="w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500"
+            className={`w-full bg-gray-700 border rounded-md shadow-sm py-2 px-3 text-gray-300 focus:outline-none focus:ring-2 ${
+              validationMessage ? 'border-yellow-500 focus:ring-yellow-500' : 'border-gray-600 focus:ring-green-500'
+            }`}
           />
+          {validationMessage && (
+            <p className="mt-2 text-xs text-yellow-400">{validationMessage}</p>
+          )}
         </div>
 
         <div className="mt-6 flex flex-col gap-4">
             <button
                 onClick={handleSave}
-                disabled={!apiKey.trim()}
+                disabled={!apiKey.trim() || !!validationMessage}
                 className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 font-semibold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 disabled:bg-gray-600 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
             >
                 Guardar y Continuar
@@ -57,7 +80,7 @@ export const ApiKeyModal: React.FC<ApiKeyModalProps> = ({ onSave, initialKey, on
                     onClick={onClearKey}
                     className="w-full text-sm font-medium text-gray-400 hover:text-red-400 transition-colors"
                 >
-                    Borrar clave y salir
+                    Usar una clave diferente
                 </button>
             )}
         </div>

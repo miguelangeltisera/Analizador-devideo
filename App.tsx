@@ -22,6 +22,7 @@ const App: React.FC = () => {
   const [isRubricOpen, setIsRubricOpen] = useState<boolean>(false);
   const [apiKey, setApiKey] = useState<string | null>(null);
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [apiKeyError, setApiKeyError] = useState<string | null>(null);
 
   useEffect(() => {
     const savedKey = localStorage.getItem(API_KEY_STORAGE_KEY);
@@ -37,12 +38,14 @@ const App: React.FC = () => {
       localStorage.setItem(API_KEY_STORAGE_KEY, key);
       setApiKey(key);
       setIsKeyModalOpen(false);
+      setApiKeyError(null); 
     }
   };
 
   const handleClearKey = () => {
     localStorage.removeItem(API_KEY_STORAGE_KEY);
     setApiKey(null);
+    setApiKeyError(null);
     setIsKeyModalOpen(true);
   };
 
@@ -62,20 +65,26 @@ const App: React.FC = () => {
     }
     setIsLoading(true);
     setError(null);
+    setApiKeyError(null);
     setAnalysisResult(null);
 
     try {
       const result = await analyzeVideo(videoFile, apiKey);
       setAnalysisResult(result);
     } catch (err: any) {
-      setError(err.message || "Ocurrió un error inesperado al analizar el video.");
+      if (err.message.includes("La clave de API no es válida")) {
+        setApiKeyError(err.message);
+        setIsKeyModalOpen(true);
+      } else {
+        setError(err.message || "Ocurrió un error inesperado al analizar el video.");
+      }
     } finally {
       setIsLoading(false);
     }
   }, [videoFile, studentName, videoTitle, studentEmail, apiKey]);
 
   if (!apiKey && isKeyModalOpen) {
-    return <ApiKeyModal onSave={handleSaveKey} />;
+    return <ApiKeyModal onSave={handleSaveKey} error={apiKeyError} />;
   }
 
   return (
@@ -139,7 +148,7 @@ const App: React.FC = () => {
         </main>
       </div>
       {isRubricOpen && <RubricModal onClose={() => setIsRubricOpen(false)} />}
-      {isKeyModalOpen && apiKey && <ApiKeyModal onSave={handleSaveKey} initialKey={apiKey} onClearKey={handleClearKey} />}
+      {isKeyModalOpen && apiKey && <ApiKeyModal onSave={handleSaveKey} initialKey={apiKey} onClearKey={handleClearKey} error={apiKeyError} />}
     </div>
   );
 };
