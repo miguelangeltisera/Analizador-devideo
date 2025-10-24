@@ -20,10 +20,6 @@ const fileToGenerativePart = async (file: File) => {
 };
 
 export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<AnalysisResult> => {
-  if (!apiKey) {
-    throw new Error("La clave API de Google no está configurada. Por favor, configúrala para continuar.");
-  }
-
   const videoPart = await fileToGenerativePart(videoFile);
 
   const prompt = `

@@ -8,20 +8,20 @@ interface RubricModalProps {
 export const RubricModal: React.FC<RubricModalProps> = ({ onClose }) => {
   return (
     <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm flex justify-center items-center z-50 p-4"
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex justify-center items-center z-50 p-4"
         onClick={onClose}
         aria-modal="true"
         role="dialog"
     >
       <div 
-        className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+        className="bg-white border border-gray-200 rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center p-4 border-b border-slate-700">
-            <h2 className="text-xl font-bold text-green-400">Rúbrica de Evaluación Audiovisual</h2>
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+            <h2 className="text-xl font-bold text-green-700">Rúbrica de Evaluación Audiovisual</h2>
             <button 
                 onClick={onClose} 
-                className="text-gray-400 hover:text-white transition-colors"
+                className="text-gray-500 hover:text-gray-800 transition-colors"
                 aria-label="Cerrar modal"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -30,7 +30,7 @@ export const RubricModal: React.FC<RubricModalProps> = ({ onClose }) => {
             </button>
         </div>
         <div className="p-6 overflow-y-auto">
-          <pre className="text-gray-300 text-sm whitespace-pre-wrap font-sans">
+          <pre className="text-gray-700 text-sm whitespace-pre-wrap font-sans">
             {RUBRIC_TEXT}
           </pre>
         </div>

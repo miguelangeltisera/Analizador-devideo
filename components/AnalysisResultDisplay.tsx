@@ -5,27 +5,27 @@ import { ChartBarIcon, CheckCircleIcon, DocumentTextIcon, SparklesIcon, Download
 
 const getScoreColor = (score: number, maxScore: number) => {
   const percentage = (score / maxScore) * 100;
-  if (percentage >= 90) return 'text-green-400';
-  if (percentage >= 70) return 'text-yellow-400';
-  if (percentage >= 50) return 'text-orange-400';
-  return 'text-red-400';
+  if (percentage >= 90) return 'text-green-500';
+  if (percentage >= 70) return 'text-yellow-500';
+  if (percentage >= 50) return 'text-orange-500';
+  return 'text-red-500';
 };
 
 const getLevelBadgeClass = (level: CriterionEvaluation['level']) => {
     switch(level) {
-        case 'Excelente': return 'bg-green-500/20 text-green-300 border-green-500/30';
-        case 'Bueno': return 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30';
-        case 'Satisfactorio': return 'bg-blue-500/20 text-blue-300 border-blue-500/30';
-        case 'Mejorable': return 'bg-orange-500/20 text-orange-300 border-orange-500/30';
-        case 'Insuficiente': return 'bg-red-500/20 text-red-300 border-red-500/30';
-        default: return 'bg-gray-500/20 text-gray-300 border-gray-500/30';
+        case 'Excelente': return 'bg-green-100 text-green-800 border-green-300';
+        case 'Bueno': return 'bg-yellow-100 text-yellow-800 border-yellow-300';
+        case 'Satisfactorio': return 'bg-blue-100 text-blue-800 border-blue-300';
+        case 'Mejorable': return 'bg-orange-100 text-orange-800 border-orange-300';
+        case 'Insuficiente': return 'bg-red-100 text-red-800 border-red-300';
+        default: return 'bg-gray-100 text-gray-800 border-gray-300';
     }
 }
 
 const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
     const [offset, setOffset] = useState(2 * Math.PI * 45);
     const percentage = score;
-    const color = percentage >= 90 ? '#4ade80' : percentage >= 70 ? '#facc15' : percentage >= 50 ? '#fb923c' : '#f87171';
+    const color = percentage >= 90 ? '#22c55e' : percentage >= 70 ? '#f59e0b' : percentage >= 50 ? '#f97316' : '#ef4444';
     const circumference = 2 * Math.PI * 45;
 
     useEffect(() => {
@@ -37,7 +37,7 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
     return (
         <div className="relative w-32 h-32 sm:w-40 sm:h-40">
             <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle className="text-gray-700" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
+                <circle className="text-gray-200" strokeWidth="10" stroke="currentColor" fill="transparent" r="45" cx="50" cy="50"/>
                 <circle
                     className="transition-all duration-1000 ease-out"
                     strokeWidth="10"
@@ -60,7 +60,7 @@ const ScoreCircle: React.FC<{ score: number }> = ({ score }) => {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
                 <span className="text-3xl sm:text-4xl font-bold" style={{color}}>{score}</span>
-                <span className="text-xs text-gray-400">/ 100</span>
+                <span className="text-xs text-gray-600">/ 100</span>
             </div>
         </div>
     )
@@ -345,39 +345,39 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
 
     return (
         <div className="space-y-10">
-            <section className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6 shadow-2xl shadow-green-500/10 animate-fade-in-up">
-                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
+            <section className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-6 shadow-lg animate-fade-in-up">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-700 mb-4">
                     <ChartBarIcon className="w-8 h-8"/>
                     <h2>Resultado General</h2>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-6">
                     <ScoreCircle score={result.finalScore} />
                     <div className="flex-1 text-center sm:text-left">
-                        <p className="text-xl font-bold text-gray-200">Calificación Final:</p>
-                        <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-300">
+                        <p className="text-xl font-bold text-gray-800">Calificación Final:</p>
+                        <p className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-600 to-teal-500">
                            {result.finalGrade}
                         </p>
-                        <div className="mt-4 p-4 bg-gray-900/50 rounded-lg">
+                        <div className="mt-4 p-4 bg-green-50 rounded-lg">
                            <div className="flex justify-between items-center mb-1">
-                                <p className="text-gray-300 font-semibold flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-yellow-400" />Feedback General:</p>
+                                <p className="text-gray-700 font-semibold flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-yellow-500" />Feedback General:</p>
                            </div>
-                           <p className="text-gray-400 text-sm">{result.overallFeedback}</p>
+                           <p className="text-gray-600 text-sm">{result.overallFeedback}</p>
                         </div>
                     </div>
                 </div>
             </section>
 
             <section className="opacity-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-700 mb-4">
                     <DownloadIcon className="w-8 h-8"/>
                     <h2>Descargar Reporte</h2>
                 </div>
-                 <div className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl p-5 flex flex-col sm:flex-row gap-4 justify-center">
-                    <button onClick={handleDownloadTxt} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-green-500 transform hover:scale-105">
+                 <div className="bg-white/50 backdrop-blur-sm border border-gray-200 rounded-xl p-5 flex flex-col sm:flex-row gap-4 justify-center">
+                    <button onClick={handleDownloadTxt} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-green-600 rounded-lg shadow-lg hover:bg-green-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-100 focus:ring-green-500 transform hover:scale-105">
                         <DocumentTextIcon className="w-5 h-5"/>
                         Descargar TXT
                     </button>
-                    <button onClick={handleDownloadPdf} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-lg hover:bg-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-teal-500 transform hover:scale-105">
+                    <button onClick={handleDownloadPdf} className="inline-flex items-center justify-center gap-2 px-6 py-2 font-semibold text-white bg-teal-600 rounded-lg shadow-lg hover:bg-teal-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-green-100 focus:ring-teal-500 transform hover:scale-105">
                         <DocumentTextIcon className="w-5 h-5"/>
                         Descargar PDF
                     </button>
@@ -385,29 +385,29 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
             </section>
             
             <section className="opacity-0 animate-fade-in-up" style={{ animationDelay: '400ms' }}>
-                <div className="flex items-center gap-3 text-2xl font-bold text-green-400 mb-4">
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-700 mb-4">
                     <DocumentTextIcon className="w-8 h-8"/>
                     <h2>Análisis Detallado por Criterio</h2>
                 </div>
                 <div className="space-y-4">
                     {categories.map(category => (
-                        <div key={category} className="bg-gray-800/30 backdrop-blur-sm border border-gray-700/50 rounded-xl overflow-hidden">
+                        <div key={category} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                             <button 
                                 onClick={() => handleToggleCategory(category)}
-                                className="w-full flex justify-between items-center text-left p-4 hover:bg-gray-700/50 transition-colors"
+                                className="w-full flex justify-between items-center text-left p-4 hover:bg-gray-50 transition-colors"
                                 aria-expanded={openCategory === category}
                             >
-                                <h3 className="text-lg font-bold text-teal-300">{category}</h3>
-                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-gray-400 transition-transform duration-300 ${openCategory === category ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <h3 className="text-lg font-bold text-teal-600">{category}</h3>
+                                <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 text-gray-500 transition-transform duration-300 ${openCategory === category ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                                 </svg>
                             </button>
                             <div className={`transition-all duration-500 ease-in-out ${openCategory === category ? 'max-h-screen' : 'max-h-0'}`}>
-                                <div className="p-4 border-t border-gray-700 space-y-4">
+                                <div className="p-4 border-t border-gray-200 space-y-4">
                                     {result.evaluations.filter(e => e.category === category).map((evaluation, index) => (
-                                        <div key={index} className="bg-gray-900/50 p-4 rounded-lg">
+                                        <div key={index} className="bg-gray-100 p-4 rounded-lg">
                                             <div className="flex flex-wrap justify-between items-start gap-2">
-                                                <h4 className="font-semibold text-gray-200">{evaluation.criterion}</h4>
+                                                <h4 className="font-semibold text-gray-800">{evaluation.criterion}</h4>
                                                 <div className="flex items-center gap-3">
                                                     <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getLevelBadgeClass(evaluation.level)}`}>{evaluation.level}</span>
                                                     <span className={`font-bold text-lg ${getScoreColor(evaluation.score, evaluation.maxScore)}`}>
@@ -415,7 +415,7 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                                                     </span>
                                                 </div>
                                             </div>
-                                            <p className="mt-2 text-sm text-gray-400 flex items-start gap-2">
+                                            <p className="mt-2 text-sm text-gray-600 flex items-start gap-2">
                                                 <CheckCircleIcon className="w-4 h-4 text-gray-500 mt-0.5 flex-shrink-0"/>
                                                 <span>{evaluation.feedback}</span>
                                             </p>
@@ -427,10 +427,10 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                     ))}
                 </div>
             </section>
-            <div className="mt-8 text-center p-4 bg-gray-900/50 border border-dashed border-gray-700 rounded-lg opacity-0 animate-fade-in" style={{ animationDelay: '600ms' }}>
-                <p className="text-gray-300 font-semibold">¡Importante!</p>
-                <p className="text-gray-400 text-sm">
-                Envíe una captura de pantalla con su clasificación a <a href="mailto:mtisera@unihumboldt.edu.ve" className="text-blue-400 hover:underline">mtisera@unihumboldt.edu.ve</a>
+            <div className="mt-8 text-center p-4 bg-green-50 border border-dashed border-green-200 rounded-lg opacity-0 animate-fade-in" style={{ animationDelay: '600ms' }}>
+                <p className="text-gray-700 font-semibold">¡Importante!</p>
+                <p className="text-gray-600 text-sm">
+                Envíe una captura de pantalla con su clasificación a <a href="mailto:mtisera@unihumboldt.edu.ve" className="text-blue-500 hover:underline">mtisera@unihumboldt.edu.ve</a>
                 </p>
             </div>
         </div>
