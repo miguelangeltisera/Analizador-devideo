@@ -95,6 +95,11 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
       text += `Feedback General: ${result.overallFeedback}\n\n`;
       
       text += `---------------------------------\n`;
+      text += `RECOMENDACIONES Y OBSERVACIONES\n`;
+      text += `---------------------------------\n`;
+      text += `${result.recommendations}\n\n`;
+
+      text += `---------------------------------\n`;
       text += `ANÁLISIS DETALLADO\n`;
       text += `---------------------------------\n\n`;
 
@@ -287,8 +292,30 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
 
         y += 50; // space after general results
 
+        // Recommendations
+        checkPageBreak(30);
+        y += 10;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(COLOR_PRIMARY);
+        doc.text('Recomendaciones y Observaciones', MARGIN, y);
+        y += 5;
+        doc.setDrawColor(COLOR_PRIMARY);
+        doc.line(MARGIN, y, MARGIN + 78, y);
+        y += 10;
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(COLOR_TEXT_LIGHT);
+        const splitRecommendations = doc.splitTextToSize(result.recommendations, CONTENT_WIDTH);
+        doc.text(splitRecommendations, MARGIN, y);
+
+        y += (splitRecommendations.length * 5);
+
+
         // Detailed Analysis
         y += 10;
+        checkPageBreak(20);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
         doc.setTextColor(COLOR_PRIMARY);
@@ -427,7 +454,18 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                     ))}
                 </div>
             </section>
-            <div className="mt-8 text-center p-4 bg-green-50 border border-dashed border-green-200 rounded-lg opacity-0 animate-fade-in" style={{ animationDelay: '600ms' }}>
+
+            <section className="opacity-0 animate-fade-in-up" style={{ animationDelay: '600ms' }}>
+                <div className="flex items-center gap-3 text-2xl font-bold text-green-700 mb-4">
+                    <SparklesIcon className="w-8 h-8 text-yellow-500"/>
+                    <h2>Recomendaciones y observaciones</h2>
+                </div>
+                <div className="bg-white/60 backdrop-blur-sm border border-gray-200 rounded-xl p-6 shadow-lg">
+                    <p className="text-gray-700 whitespace-pre-wrap">{result.recommendations}</p>
+                </div>
+            </section>
+
+            <div className="mt-8 text-center p-4 bg-green-50 border border-dashed border-green-200 rounded-lg opacity-0 animate-fade-in" style={{ animationDelay: '800ms' }}>
                 <p className="text-gray-700 font-semibold">¡Importante!</p>
                 <p className="text-gray-600 text-sm">
                 Envíe una captura de pantalla con su clasificación a <a href="mailto:mtisera@unihumboldt.edu.ve" className="text-blue-500 hover:underline">mtisera@unihumboldt.edu.ve</a>

@@ -12,12 +12,12 @@ A continuación se presenta la rúbrica detallada que debes usar para evaluar el
 
 **1. Asimilación Práctica de Conceptos Teóricos y Aplicación (40 puntos)**
 
-*   **Criterio: Exámenes/Análisis Teórico (10 pts)**
-    *   Excelente (10 pts): Respuestas completas, con ejemplos audiovisuales y análisis crítico de la teoría (Field, McKee, Eisenstein).
-    *   Bueno (8-9 pts): Respuestas claras, aunque con algunos vacíos conceptuales o falta de ejemplos.
-    *   Satisfactorio (6-7 pts): Respuestas básicas, sin profundidad en el análisis teórico.
-    *   Mejorable (4-5 pts): Respuestas incompletas o con errores técnicos en la aplicación de la teoría.
-    *   Insuficiente (0-3 pts): Respuestas ausentes o incorrectas, sin relación con los teóricos.
+*   **Criterio: Aplicación Práctica de Conceptos Teóricos en el Video (10 pts)**
+    *   Excelente (10 pts): El video demuestra una aplicación magistral y crítica de las teorías narrativas y de montaje (ej: de Field, McKee, Eisenstein). Los conceptos teóricos no solo están presentes, sino que potencian la historia y el lenguaje visual de forma sofisticada.
+    *   Bueno (8-9 pts): El video aplica claramente conceptos teóricos clave en su estructura y edición, aunque con menor profundidad u originalidad que el nivel 'Excelente'. La teoría sirve eficazmente a la historia.
+    *   Satisfactorio (6-7 pts): El video muestra una comprensión y aplicación básicas de los conceptos teóricos, pero puede ser superficial o inconsistente. La estructura y el montaje son funcionales pero carecen de complejidad.
+    *   Mejorable (4-5 pts): Hay intentos visibles de aplicar la teoría, pero contienen errores o malentendidos. La estructura narrativa o las decisiones de montaje pueden sentirse desconectadas de los principios teóricos.
+    *   Insuficiente (0-3 pts): El video muestra poca o ninguna evidencia de aplicar los conceptos teóricos centrales. La narrativa y el montaje se sienten arbitrarios y sin una base teórica sólida.
 
 *   **Criterio: Guion Literario (Aplicación Teórica) (10 pts)**
     *   Excelente (10 pts): Estructura narrativa innovadora, personajes complejos, diálogos auténticos, aplicando con maestría los principios de guion.

@@ -27,7 +27,7 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
     
     Analiza el video adjunto y completa la evaluación para cada criterio, asignando un puntaje, seleccionando el nivel de logro y proporcionando un feedback constructivo y detallado.
     
-    Al final, calcula el puntaje total sumando todos los puntajes de los criterios y proporciona un feedback general sobre el proyecto.
+    Al final, calcula el puntaje total sumando todos los puntajes de los criterios, proporciona un feedback general sobre el proyecto y, finalmente, elabora una sección detallada de recomendaciones y observaciones para mejorar y corregir el video analizado. Sé específico y ofrece consejos prácticos.
     
     Tu respuesta DEBE ser un objeto JSON válido que se ajuste al esquema proporcionado. No incluyas \`\`\`json ni ningún otro formato, solo el JSON puro.
     
@@ -56,8 +56,9 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
       finalScore: { type: Type.NUMBER, description: 'El puntaje final total (suma de todos los puntajes).' },
       finalGrade: { type: Type.STRING, description: 'La calificación final basada en la escala de puntajes.' },
       overallFeedback: { type: Type.STRING, description: 'Un párrafo con feedback general y constructivo sobre todo el proyecto.' },
+      recommendations: { type: Type.STRING, description: 'Una lista de recomendaciones y observaciones detalladas para mejorar y corregir el video.' },
     },
-    required: ['evaluations', 'finalScore', 'finalGrade', 'overallFeedback'],
+    required: ['evaluations', 'finalScore', 'finalGrade', 'overallFeedback', 'recommendations'],
   };
   
   try {
@@ -69,6 +70,7 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
         responseMimeType: "application/json",
         responseSchema,
         temperature: 0.2,
+        thinkingConfig: { thinkingBudget: 32768 },
       },
     });
     
