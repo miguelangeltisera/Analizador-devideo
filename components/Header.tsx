@@ -12,11 +12,11 @@ export const Header: React.FC<HeaderProps> = ({ onShowRubric, onClearApiKey }) =
       <div className="flex justify-center items-center gap-4">
         <LogoIcon className="w-12 h-12 text-green-500"/>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-teal-300 tracking-tight">
-          Analizador de Video con Rúbrica
+          Evaluación de Vídeo con Rúbrica
         </h1>
       </div>
-      <p className="mt-2 text-sm text-gray-500">
-        Aplicación experimental creada por el profesor de Realización Audiovisual Miguelangel Tisera
+      <p className="mt-2 text-base text-gray-200">
+        Aplicación experimental creada por el profesor Miguelángel Tisera
       </p>
       <div className="mt-4 flex justify-center items-center gap-4">
         <button 

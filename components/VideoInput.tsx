@@ -28,22 +28,35 @@ export const VideoInput: React.FC<VideoInputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isCached, setIsCached] = useState(false);
+  const [processingMessage, setProcessingMessage] = useState<string | null>(null);
 
-  const processFile = (file: File | null, fromCache: boolean) => {
+  const processFile = async (file: File | null, fromCache: boolean) => {
     if (file) {
       setFileName(file.name);
       const url = URL.createObjectURL(file);
       setVideoSrc(url);
       onFileChange(file);
       setIsCached(fromCache);
+      setPendingFile(null);
+
       if (!fromCache) {
-        cacheFile(file).catch(err => console.error("Error al guardar en caché:", err));
+        setProcessingMessage("Guardando en caché para futuros usos...");
+        try {
+          await cacheFile(file);
+          setIsCached(true);
+        } catch (err) {
+          console.error("Error al guardar en caché:", err);
+          setIsCached(false);
+        } finally {
+          setProcessingMessage(null);
+        }
       }
     } else {
       setFileName(null);
       setVideoSrc(null);
       onFileChange(null);
       setIsCached(false);
+      setProcessingMessage(null);
     }
     setPendingFile(null);
   };
@@ -52,11 +65,18 @@ export const VideoInput: React.FC<VideoInputProps> = ({
     if (!file || !file.type.startsWith('video/')) {
         return;
     }
+    setVideoSrc(null);
+    setIsCached(false);
+    onFileChange(null);
+    setProcessingMessage("Analizando archivo...");
+    setFileName(file.name);
+
     const cachedVersion = await findCachedFile(file);
     if (cachedVersion) {
-        setPendingFile(file); 
+        setPendingFile(file);
+        setProcessingMessage(null);
     } else {
-        processFile(file, false);
+        await processFile(file, false);
     }
   };
 
@@ -83,12 +103,12 @@ export const VideoInput: React.FC<VideoInputProps> = ({
   const handleUseCached = async () => {
       if (!pendingFile) return;
       const cachedFile = await findCachedFile(pendingFile);
-      processFile(cachedFile ?? pendingFile, !!cachedFile);
+      await processFile(cachedFile ?? pendingFile, !!cachedFile);
   };
 
-  const handleUploadNew = () => {
+  const handleUploadNew = async () => {
       if (!pendingFile) return;
-      processFile(pendingFile, false);
+      await processFile(pendingFile, false);
   };
 
   const inputStyles = "mt-1 block w-full bg-gray-700 border border-gray-600 rounded-md shadow-sm py-2 px-3 text-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm disabled:cursor-not-allowed disabled:opacity-50";
@@ -161,25 +181,52 @@ export const VideoInput: React.FC<VideoInputProps> = ({
         ) : (
             <label 
                 htmlFor="video-upload" 
-                className="relative block w-full h-48 sm:h-64 border-2 border-dashed border-gray-600 rounded-lg flex flex-col justify-center items-center text-center cursor-pointer hover:border-green-500 transition-colors bg-gray-800/50"
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
+                className={`relative block w-full h-48 sm:h-64 border-2 border-dashed border-gray-600 rounded-lg flex flex-col justify-center items-center text-center transition-colors bg-gray-800/50 ${!disabled && !processingMessage ? 'cursor-pointer hover:border-green-500' : 'cursor-default'}`}
+                onDragOver={!disabled && !processingMessage ? handleDragOver : undefined}
+                onDrop={!disabled && !processingMessage ? handleDrop : undefined}
             >
               {videoSrc ? (
                 <>
                     <video src={videoSrc} controls className="absolute inset-0 w-full h-full object-contain rounded-lg p-1"></video>
-                    {isCached && (
+                    {isCached && !processingMessage && (
                         <div className="absolute top-2 right-2 flex items-center gap-1 bg-green-600/80 text-white text-xs font-semibold px-2 py-1 rounded-full backdrop-blur-sm">
                             <CheckBadgeIcon className="w-4 h-4" />
                             <span>Cacheado</span>
                         </div>
                     )}
+                    {processingMessage && (
+                        <div className="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex flex-col items-center justify-center text-center rounded-lg p-4">
+                            <svg className="animate-spin h-8 w-8 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span className="mt-3 block text-sm font-semibold text-gray-300">
+                                {processingMessage}
+                            </span>
+                            <span className="mt-1 block text-xs text-gray-500">
+                                Esto puede tardar un momento...
+                            </span>
+                        </div>
+                    )}
                 </>
+              ) : processingMessage ? (
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                    <svg className="animate-spin h-8 w-8 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                     <span className="mt-3 block text-sm font-semibold text-gray-300">
+                        {fileName}
+                    </span>
+                    <span className="mt-1 block text-xs font-semibold text-gray-400">
+                        {processingMessage}
+                    </span>
+                </div>
               ) : (
                 <>
                     <UploadIcon className="w-12 h-12 mx-auto text-gray-500"/>
                     <span className="mt-2 block text-sm font-semibold text-gray-300">
-                    {fileName || "Arrastra y suelta un video, o haz clic para seleccionar"}
+                    Arrastra y suelta un video, o haz clic para seleccionar
                     </span>
                     <span className="block text-xs text-gray-500">MP4, MOV, WEBM, etc.</span>
                 </>
@@ -191,7 +238,7 @@ export const VideoInput: React.FC<VideoInputProps> = ({
                 accept="video/*"
                 className="sr-only"
                 onChange={handleFileChange}
-                disabled={disabled}
+                disabled={disabled || !!processingMessage}
               />
             </label>
         )}

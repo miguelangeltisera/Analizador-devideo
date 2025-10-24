@@ -145,6 +145,7 @@ const App: React.FC = () => {
                   studentName={studentName}
                   videoTitle={videoTitle}
                   studentEmail={studentEmail}
+                  apiKey={apiKey}
                 />
              </div>
           )}

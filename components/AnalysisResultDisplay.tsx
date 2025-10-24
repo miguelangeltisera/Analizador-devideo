@@ -1,7 +1,39 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { jsPDF } from 'jspdf';
 import type { AnalysisResult, CriterionEvaluation } from '../types';
-import { ChartBarIcon, CheckCircleIcon, DocumentTextIcon, SparklesIcon, DownloadIcon } from './Icons';
+import { ChartBarIcon, CheckCircleIcon, DocumentTextIcon, SparklesIcon, DownloadIcon, SpeakerWaveIcon, SpeakerXMarkIcon } from './Icons';
+import { generateSpeech } from '../services/geminiService';
+
+// --- Funciones de decodificación de audio ---
+function decode(base64: string): Uint8Array {
+    const binaryString = atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes;
+}
+  
+async function decodeAudioData(
+    data: Uint8Array,
+    ctx: AudioContext,
+    sampleRate: number,
+    numChannels: number,
+): Promise<AudioBuffer> {
+    const dataInt16 = new Int16Array(data.buffer);
+    const frameCount = dataInt16.length / numChannels;
+    const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+
+    for (let channel = 0; channel < numChannels; channel++) {
+        const channelData = buffer.getChannelData(channel);
+        for (let i = 0; i < frameCount; i++) {
+        channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+        }
+    }
+    return buffer;
+}
+
 
 const getScoreColor = (score: number, maxScore: number) => {
   const percentage = (score / maxScore) * 100;
@@ -71,11 +103,85 @@ interface AnalysisResultDisplayProps {
   studentName: string;
   videoTitle: string;
   studentEmail: string;
+  apiKey: string | null;
 }
 
-export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ result, studentName, videoTitle, studentEmail }) => {
+export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ result, studentName, videoTitle, studentEmail, apiKey }) => {
     const categories: string[] = [...new Set<string>(result.evaluations.map(e => e.category))];
     const [openCategory, setOpenCategory] = useState<string | null>(categories[0] || null);
+    const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
+    const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+    const audioContextRef = useRef<AudioContext | null>(null);
+    const audioSourceRef = useRef<AudioBufferSourceNode | null>(null);
+
+    useEffect(() => {
+        if (!audioContextRef.current) {
+            audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+        }
+        
+        return () => {
+            if (audioSourceRef.current) {
+                audioSourceRef.current.stop();
+            }
+            if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+                audioContextRef.current.close();
+            }
+        };
+    }, []);
+
+    const handlePlayAudio = async () => {
+        if (!apiKey) {
+            alert("API Key no encontrada. No se puede generar audio.");
+            return;
+        }
+
+        if (isPlayingAudio && audioSourceRef.current) {
+            audioSourceRef.current.stop();
+            setIsPlayingAudio(false);
+            return;
+        }
+
+        setIsGeneratingAudio(true);
+        try {
+            const textToSpeak = `Calificación final: ${result.finalGrade}. Feedback general: ${result.overallFeedback}`;
+            const base64Audio = await generateSpeech(textToSpeak, apiKey);
+            
+            const audioContext = audioContextRef.current;
+            if (!audioContext) return;
+
+            if (audioContext.state === 'suspended') {
+                await audioContext.resume();
+            }
+
+            const audioBuffer = await decodeAudioData(
+                decode(base64Audio),
+                audioContext,
+                24000,
+                1,
+            );
+
+            if (audioSourceRef.current) {
+                audioSourceRef.current.stop();
+            }
+
+            const source = audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(audioContext.destination);
+            source.onended = () => {
+                setIsPlayingAudio(false);
+                audioSourceRef.current = null;
+            };
+            source.start();
+            audioSourceRef.current = source;
+            setIsPlayingAudio(true);
+
+        } catch (error) {
+            console.error("Error al reproducir audio:", error);
+            alert(`No se pudo reproducir el audio: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            setIsGeneratingAudio(false);
+        }
+    };
 
     const handleToggleCategory = (category: string) => {
         setOpenCategory(prev => (prev === category ? null : category));
@@ -358,7 +464,27 @@ export const AnalysisResultDisplay: React.FC<AnalysisResultDisplayProps> = ({ re
                            {result.finalGrade}
                         </p>
                         <div className="mt-4 p-4 bg-gray-900/50 rounded-lg">
-                           <p className="text-gray-300 font-semibold mb-1 flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-yellow-400" />Feedback General:</p>
+                           <div className="flex justify-between items-center mb-1">
+                                <p className="text-gray-300 font-semibold flex items-center gap-2"><SparklesIcon className="w-5 h-5 text-yellow-400" />Feedback General:</p>
+                                <button
+                                    onClick={handlePlayAudio}
+                                    disabled={isGeneratingAudio}
+                                    className="p-1.5 rounded-full text-gray-400 hover:bg-gray-700 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                    title={isPlayingAudio ? "Detener audio" : "Leer feedback en voz alta"}
+                                    aria-label={isPlayingAudio ? "Detener audio" : "Leer feedback en voz alta"}
+                                >
+                                    {isGeneratingAudio ? (
+                                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                        </svg>
+                                    ) : isPlayingAudio ? (
+                                        <SpeakerXMarkIcon className="w-5 h-5" />
+                                    ) : (
+                                        <SpeakerWaveIcon className="w-5 h-5" />
+                                    )}
+                                </button>
+                           </div>
                            <p className="text-gray-400 text-sm">{result.overallFeedback}</p>
                         </div>
                     </div>

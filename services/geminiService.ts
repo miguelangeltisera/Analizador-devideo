@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, Modality } from "@google/genai";
 import { AnalysisResult } from '../types';
 import { GEMINI_MODEL, RUBRIC_TEXT } from '../constants';
 
@@ -93,3 +93,41 @@ export const analyzeVideo = async (videoFile: File, apiKey: string): Promise<Ana
     throw new Error("Ocurrió un error desconocido durante el análisis del video.");
   }
 };
+
+export const generateSpeech = async (text: string, apiKey: string): Promise<string> => {
+    if (!apiKey) {
+      throw new Error("La clave API de Google no está configurada.");
+    }
+    
+    const ai = new GoogleGenAI({ apiKey });
+  
+    try {
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
+        contents: [{ parts: [{ text: `Con un tono profesional y alentador, di: ${text}` }] }],
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: 'Kore' },
+              },
+          },
+        },
+      });
+  
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (!base64Audio) {
+        throw new Error("No se recibió audio del servicio TTS.");
+      }
+      return base64Audio;
+    } catch (error) {
+      console.error("Error generating speech with Gemini:", error);
+      if (error instanceof Error) {
+          if (error.message.includes('API key not valid')) {
+              throw new Error('La clave de API no es válida. Por favor, verifica e inténtalo de nuevo.');
+          }
+          throw new Error(`Fallo al generar el audio: ${error.message}`);
+      }
+      throw new Error("Ocurrió un error desconocido durante la generación de audio.");
+    }
+  };
